@@ -182,7 +182,7 @@ class HTTP::Client
     @dns_timeout = dns_timeout.to_f
   end
 
-  # Set the open timeout with a `Time::Span` to wait when resolving name, before raising an `IO::Timeout`.
+  # Set the timeout with a `Time::Span` to wait when resolving name, before raising an `IO::Timeout`.
   #
   # ```
   # client = HTTP::Client.new("grtv.ml")
