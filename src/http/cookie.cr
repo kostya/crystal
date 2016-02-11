@@ -134,21 +134,25 @@ module HTTP
     #
     # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
     def self.from_headers(headers)
-      new.tap do |cookies|
-        if values = headers.get?("Cookie")
-          values.each do |header|
-            Cookie::Parser.parse_cookies(header) { |cookie| cookies << cookie }
-          end
-          headers.delete "Cookie"
-        end
+      new.tap { |cookies| cookies.fill_from_headers(headers) }
+    end
 
-        if values = headers.get?("Set-Cookie")
-          values.each do |header|
-            Cookie::Parser.parse_set_cookie(header).try { |cookie| cookies << cookie }
-          end
-          headers.delete "Set-Cookie"
+    # :nodoc:
+    def fill_from_headers(headers)
+      if values = headers.get?("Cookie")
+        values.each do |header|
+          Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
         end
+        headers.delete "Cookie"
       end
+
+      if values = headers.get?("Set-Cookie")
+        values.each do |header|
+          Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
+        end
+        headers.delete "Set-Cookie"
+      end
+      self
     end
 
     # Create a new empty instance
