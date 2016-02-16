@@ -6,11 +6,25 @@ require "uri"
 class HTTP::StaticFileHandler < HTTP::Handler
   # Creates a handler that will serve files in the given *public_dir*, after
   # expanding it (using `File#expand_path`).
-  def initialize(public_dir)
+  #
+  # If *fallthrough* is `false`, this handler dose not call next handler when
+  # request method is neither GET or HEAD, then serves `405 Method Not Allowed`.
+  # Otherwise, it calls next handler.
+  def initialize(public_dir, @fallthrough = true)
     @public_dir = File.expand_path public_dir
   end
 
   def call(context)
+    unless context.request.method == "GET" || context.request.method == "HEAD"
+      if @fallthrough
+        call_next(context)
+      else
+        context.response.status_code = 405
+        context.response.headers.add("Allow", "GET, HEAD")
+      end
+      return
+    end
+
     request_path = URI.unescape(context.request.path.not_nil!)
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
@@ -56,7 +70,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
       end
     end
 
-    ecr_file "#{__DIR__}/static_file_handler.html"
+    ECR.def_to_s "#{__DIR__}/static_file_handler.html"
   end
 
   private def directory_listing(io, request_path, path)

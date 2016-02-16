@@ -940,6 +940,7 @@ describe "Parser" do
   it_parses "1 as Bar", Cast.new(1.int32, "Bar".path)
   it_parses "foo as Bar", Cast.new("foo".call, "Bar".path)
   it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
+  it_parses "call(foo as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
 
   it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
@@ -1396,6 +1397,14 @@ describe "Parser" do
       loc = nodes.last.location.not_nil!
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
+    end
+
+    it "sets location of enum method" do
+      parser = Parser.new("enum Foo; A; def bar; end; end")
+      node = (parser.parse as EnumDef).members[1] as Def
+      loc = node.location.not_nil!
+      loc.line_number.should eq(1)
+      loc.column_number.should eq(14)
     end
   end
 end
